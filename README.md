@@ -3,7 +3,7 @@
 This is a web application that suggests recipes to users based on the ingredients they have on hand. Users can input ingredients via text or by uploading an image. The application features filtering, dietary preferences, recipe ratings, and personalized suggestions.   
 **Note:** Other than the given requirements as per the document the additional feature is added which allows the user to see the items that are missing in order to make a partiuclar recipe.
 
-##Features
+## Features
 Ingredient Input: Users can enter a comma-separated list of ingredients.
 
 Image Recognition: Upload an image of your ingredients, and the app will use the Gemini API to identify them.
