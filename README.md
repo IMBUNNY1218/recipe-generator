@@ -1,4 +1,4 @@
-# recipe-generator
+
 # Smart Recipe Generator
 This is a web application that suggests recipes to users based on the ingredients they have on hand. Users can input ingredients via text or by uploading an image. The application features filtering, dietary preferences, recipe ratings, and personalized suggestions.
 
