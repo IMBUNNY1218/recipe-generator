@@ -1,8 +1,9 @@
 
 # Smart Recipe Generator
-This is a web application that suggests recipes to users based on the ingredients they have on hand. Users can input ingredients via text or by uploading an image. The application features filtering, dietary preferences, recipe ratings, and personalized suggestions.
+This is a web application that suggests recipes to users based on the ingredients they have on hand. Users can input ingredients via text or by uploading an image. The application features filtering, dietary preferences, recipe ratings, and personalized suggestions.   
+**Note:** Other than the given requirements as per the document the additional feature is added which allows the user to see the items that are missing in order to make a partiuclar recipe.
 
-Features
+##Features
 Ingredient Input: Users can enter a comma-separated list of ingredients.
 
 Image Recognition: Upload an image of your ingredients, and the app will use the Gemini API to identify them.
@@ -11,11 +12,13 @@ Recipe Matching: A matching algorithm finds the best recipes from the database b
 
 Filtering & Sorting: Filter recipes by difficulty and cooking time, and sort the results.
 
-Dietary Preferences: Select options like Vegetarian, Vegan, Gluten-Free, and Dairy-Free.
+Dietary Preferences: Select options like Vegetarian, Healthy, Gluten-Free, and Dairy-Free.
 
 Recipe Details: View detailed recipe information, including ingredients, instructions, and nutritional facts in a modal view.
 
 Favorites & Ratings: Logged-in (anonymously) users can save their favorite recipes and rate them.
+
+Missing Ingredients: Also provides the missing ingredients to make a particular dish.
 
 Personalized Suggestions: The app suggests new recipes based on your saved favorites and highly-rated recipes.
 
@@ -30,7 +33,7 @@ AI/ML: Google Gemini API for image-based ingredient recognition.
 
 Backend/Database: Google Firestore for storing user favorites and ratings.
 
-Hosting: The application is designed to be deployed on any static hosting service like Netlify, Vercel, or GitHub Pages.
+Hosting: The application is deployed on GitHub Pages.
 
 Getting Started
 To run this project locally, you need to configure your Firebase credentials.
