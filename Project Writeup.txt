@@ -1,0 +1,12 @@
+Smart Recipe Generator: Technical Approach
+This project was developed as a single-page application using vanilla JavaScript, HTML, and Tailwind CSS to ensure a clean, maintainable, and dependency-free frontend.
+
+My approach focused on fulfilling all core requirements while prioritizing user experience and code quality. The architecture is modular, with distinct sections for UI manipulation, state management, API interaction, and business logic.
+
+Ingredient Recognition: For image-based ingredient input, I integrated the Google Gemini API. When a user uploads an image, it is converted to a Base64 string and sent to the Gemini Vision model. The model is prompted to identify and list the food items, which are then parsed and added to the user's ingredient list.
+
+Recipe Matching Logic: The recipe matching algorithm calculates a matchScore for each recipe based on the percentage of available ingredients. It also counts the number of missing ingredients, which are then clearly displayed on each recipe card to help with meal planning. Recipes are sorted primarily by the highest match score and secondarily by the lowest number of missing ingredients, ensuring the most relevant results appear first.
+
+User Data and Personalization: To handle user-specific data like "favorites" and "ratings," I used Google Firestore with Firebase's anonymous authentication. This allows the application to persist user data across sessions without requiring a full registration process. A suggestions feature analyzes a user's favorite and highly-rated recipes to recommend other recipes from similar cuisines.
+
+UI/UX and State Management: The user interface is designed to be intuitive and fully responsive, using Tailwind CSS for a modern look. It includes advanced filters for cuisine, time, and dietary needs—including a "Healthy" option for balanced meals. Loading states and clear error messages are implemented for a smooth user experience. The application's state is managed in simple JavaScript variables, re-rendering the UI only when necessary.
