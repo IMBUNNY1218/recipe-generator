@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Recipe Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8b5cf6; /* Purple */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -20px;
+            margin-top: -20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5; /* indigo-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1; /* indigo-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl sm:text-5xl font-bold text-white">Smart Recipe Generator</h1>
+            <p class="mt-2 text-lg text-gray-400">Discover recipes with the ingredients you have!</p>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Input Section -->
+            <div class="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8 border border-gray-700">
+                <h2 class="text-2xl font-semibold mb-4 text-white">Your Ingredients</h2>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <label for="ingredient-text-input" class="sr-only">Enter ingredients</label>
+                        <input type="text" id="ingredient-text-input" placeholder="e.g., chicken, rice, tomatoes" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                        <p class="text-sm text-gray-500 mt-2">Separate ingredients with a comma.</p>
+                    </div>
+                    <div class="flex-1 md:border-l md:border-gray-700 md:pl-6">
+                        <label for="ingredient-image-input" class="block text-sm font-medium text-gray-300 mb-2">Or upload an image of your ingredients:</label>
+                        <input type="file" id="ingredient-image-input" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/30 transition">
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-white mb-2">Dietary Preferences</h3>
+                    <div class="flex flex-wrap gap-x-6 gap-y-2">
+                        <div>
+                            <input type="checkbox" id="vegetarian" value="vegetarian" class="diet-pref h-4 w-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500">
+                            <label for="vegetarian" class="ml-2 text-gray-300">Vegetarian</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="gluten-free" value="gluten-free" class="diet-pref h-4 w-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500">
+                            <label for="gluten-free" class="ml-2 text-gray-300">Gluten-Free</label>
+                        </div>
+                         <div>
+                            <input type="checkbox" id="dairy-free" value="dairy-free" class="diet-pref h-4 w-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500">
+                            <label for="dairy-free" class="ml-2 text-gray-300">Dairy-Free</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="healthy" value="healthy" class="diet-pref h-4 w-4 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-purple-500">
+                            <label for="healthy" class="ml-2 text-gray-300">Healthy</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button id="find-recipes-btn" class="bg-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-purple-700 transition-all transform hover:scale-105 shadow-lg shadow-purple-600/20">Find Recipes</button>
+                </div>
+            </div>
+            
+            <!-- Filters & Sorting -->
+            <div id="filter-section" class="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8 hidden border border-gray-700">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label for="cuisine-filter" class="block text-sm font-medium text-gray-300 mb-1">Cuisine</label>
+                        <select id="cuisine-filter" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="all">All</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Mexican">Mexican</option>
+                            <option value="Indian">Indian</option>
+                            <option value="American">American</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="difficulty-filter" class="block text-sm font-medium text-gray-300 mb-1">Difficulty</label>
+                        <select id="difficulty-filter" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="all">All</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="time-filter" class="block text-sm font-medium text-gray-300 mb-1">Cooking Time</label>
+                        <select id="time-filter" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="all">All</option>
+                            <option value="30">Under 30 mins</option>
+                            <option value="60">Under 1 hour</option>
+                            <option value="120">Under 2 hours</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="sort-by" class="block text-sm font-medium text-gray-300 mb-1">Sort By</label>
+                        <select id="sort-by" class="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="match">Best Match</option>
+                            <option value="time-asc">Time (Low to High)</option>
+                            <option value="time-desc">Time (High to Low)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipe Results -->
+            <div id="recipe-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Recipe cards will be injected here -->
+            </div>
+             <!-- Suggested Recipes -->
+            <div id="suggested-recipes-section" class="mt-12 hidden">
+                <h2 class="text-3xl font-bold text-center mb-8 text-white">Suggested For You</h2>
+                <div id="suggested-recipes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Suggested recipe cards will be injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Recipe Details -->
+    <div id="recipe-modal" class="modal fixed inset-0 bg-black bg-opacity-75 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-2xl bg-gray-800 border-gray-700">
+            <div id="modal-content" class="mt-3 text-center">
+                <!-- Modal content will be injected here -->
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="close-modal-btn" class="px-4 py-2 bg-gray-700 text-gray-200 rounded-lg hover:bg-gray-600 w-full transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div id="loader" class="fixed inset-0 bg-black bg-opacity-75 h-full w-full hidden z-50">
+        <div class="loader"></div>
+        <p class="text-white text-center absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-8">Analyzing ingredients...</p>
+    </div>
+
+    <!-- Message Box -->
+    <div id="message-box" class="hidden fixed bottom-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg">
+        <p id="message-text"></p>
+    </div>
+    
+    <script>
+        // Recipe data is placed here to avoid issues with loading external files in this environment.
+        window.recipeDatabase = [
+            // Italian
+            { 
+                id: 1, 
+                name: "Spaghetti Carbonara", 
+                cuisine: "Italian", 
+                difficulty: "Medium", 
+                time: 30, 
+                servings: 4, 
+                ingredients: [
+                    {name:"spaghetti", amount:400, unit:"g"}, 
+                    {name:"pancetta", amount:150, unit:"g"}, 
+                    {name:"eggs", amount:4, unit:""}, 
+                    {name:"parmesan cheese", amount:50, unit:"g"}, 
+                    {name:"black pepper", amount:1, unit:"tsp"}
+                ], 
+                nutrition: { calories: 600, protein: 25 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/F4D03F/000000?text=Spaghetti+Carbonara",
+                instructions: `1. Cook the spaghetti in a large pot of salted boiling water according to package directions.\n2. While the pasta is cooking, chop the pancetta into small cubes. Fry in a large pan over medium heat until crisp. Turn off the heat.\n3. In a separate bowl, whisk together the eggs and grated parmesan cheese. Add a generous amount of freshly ground black pepper.\n4. Once the pasta is cooked, drain it, reserving a cup of the pasta water.\n5. Immediately add the hot pasta to the pan with the pancetta and toss to combine. It's important to do this off the heat to avoid scrambling the eggs.\n6. Pour the egg and cheese mixture over the pasta, tossing quickly to coat everything. The heat from the pasta will cook the eggs and melt the cheese, creating a creamy sauce.\n7. If the sauce is too thick, add a tablespoon or two of the reserved pasta water to loosen it.\n8. Serve immediately with an extra sprinkle of parmesan and black pepper.`
+            },
+            { 
+                id: 2, 
+                name: "Margherita Pizza", 
+                cuisine: "Italian", 
+                difficulty: "Medium", 
+                time: 90, 
+                servings: 2, 
+                ingredients: [
+                    {name:"pizza dough", amount:1, unit:"ball"}, 
+                    {name:"tomatoes", amount:400, unit:"g can"}, 
+                    {name:"mozzarella", amount:125, unit:"g"}, 
+                    {name:"basil", amount:1, unit:"bunch"}, 
+                    {name:"olive oil", amount:1, unit:"tbsp"}
+                ], 
+                nutrition: { calories: 800, protein: 30 }, 
+                diet: ["vegetarian"], 
+                image: "https://placehold.co/600x400/F5B041/000000?text=Margherita+Pizza",
+                instructions: `1. Preheat your oven to its highest temperature (around 240°C or 475°F) with a pizza stone or baking tray inside.\n2. For the sauce, blend the canned tomatoes with a pinch of salt and a drizzle of olive oil until smooth.\n3. Stretch out the pizza dough on a lightly floured surface to your desired thickness.\n4. Spread a thin layer of the tomato sauce over the dough, leaving a small border around the edge.\n5. Tear the mozzarella cheese into pieces and scatter it over the sauce.\n6. Carefully slide the pizza onto the preheated stone or tray in the oven.\n7. Bake for 8-12 minutes, or until the crust is golden and the cheese is bubbly and slightly browned.\n8. Remove from the oven, top with fresh basil leaves, drizzle with a little more olive oil, and serve hot.`
+            },
+            { 
+                id: 3, 
+                name: "Mushroom Risotto", 
+                cuisine: "Italian", 
+                difficulty: "Hard", 
+                time: 45, 
+                servings: 2, 
+                ingredients: [
+                    {name:"arborio rice", amount:150, unit:"g"}, 
+                    {name:"mushrooms", amount:200, unit:"g"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"vegetable broth", amount:500, unit:"ml"}, 
+                    {name:"parmesan cheese", amount:30, unit:"g"}, 
+                    {name:"white wine", amount:50, unit:"ml"}
+                ], 
+                nutrition: { calories: 450, protein: 15 }, 
+                diet: ["vegetarian", "gluten-free"], 
+                image: "https://placehold.co/600x400/F5B7B1/000000?text=Mushroom+Risotto",
+                instructions: `1. Gently heat the vegetable broth in a saucepan and keep it at a simmer.\n2. Finely chop the onion and slice the mushrooms. In a separate large pan, sauté the onion in a little olive oil until soft.\n3. Add the mushrooms and cook until they have released their water and started to brown. Remove half the mushrooms and set aside.\n4. Add the arborio rice to the pan and stir for a minute until the grains are coated and translucent at the edges.\n5. Pour in the white wine and stir until it has been fully absorbed.\n6. Add a ladle of the hot broth to the rice and stir continuously until the liquid is absorbed. Continue adding the broth one ladle at a time, waiting for each to be absorbed before adding the next. This process should take about 18-20 minutes.\n7. Once the rice is creamy but still has a slight bite, turn off the heat. Stir in the grated parmesan cheese and the reserved mushrooms.\n8. Season with salt and pepper to taste and serve immediately.`
+            },
+            { 
+                id: 4, 
+                name: "Pesto Pasta", 
+                cuisine: "Italian", 
+                difficulty: "Easy", 
+                time: 20, 
+                servings: 2, 
+                ingredients: [
+                    {name:"pasta", amount:200, unit:"g"}, 
+                    {name:"basil", amount:50, unit:"g"}, 
+                    {name:"pine nuts", amount:25, unit:"g"}, 
+                    {name:"garlic", amount:2, unit:"cloves"}, 
+                    {name:"parmesan cheese", amount:25, unit:"g"}, 
+                    {name:"olive oil", amount:50, unit:"ml"}
+                ], 
+                nutrition: { calories: 550, protein: 20 }, 
+                diet: ["vegetarian"], 
+                image: "https://placehold.co/600x400/ABEBC6/000000?text=Pesto+Pasta",
+                instructions: `1. Cook the pasta in a large pot of salted boiling water according to package directions.\n2. While the pasta cooks, make the pesto. Combine the basil, toasted pine nuts, garlic, and grated parmesan cheese in a food processor.\n3. Pulse a few times to roughly chop the ingredients.\n4. With the processor running, slowly stream in the olive oil until the pesto is smooth but still has some texture. Season with salt and pepper.\n5. Drain the cooked pasta, reserving a small amount of the cooking water.\n6. In a large bowl, toss the hot pasta with the pesto. Add a little of the reserved pasta water if needed to create a silkier sauce that coats the pasta well.\n7. Serve immediately, topped with extra parmesan cheese if desired.`
+            },
+            { 
+                id: 5, 
+                name: "Chicken Alfredo", 
+                cuisine: "Italian", 
+                difficulty: "Medium", 
+                time: 35, 
+                servings: 2, 
+                ingredients: [
+                    {name:"fettuccine", amount:200, unit:"g"}, 
+                    {name:"chicken breast", amount:1, unit:""}, 
+                    {name:"heavy cream", amount:150, unit:"ml"}, 
+                    {name:"butter", amount:30, unit:"g"}, 
+                    {name:"parmesan cheese", amount:40, unit:"g"}, 
+                    {name:"garlic", amount:2, unit:"cloves"}
+                ], 
+                nutrition: { calories: 750, protein: 40 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/D2B4DE/000000?text=Chicken+Alfredo",
+                instructions: `1. Season the chicken breast with salt and pepper. Cook in a hot pan with a little olive oil until golden brown and cooked through. Set aside to rest, then slice.\n2. Cook the fettuccine in a large pot of salted boiling water.\n3. While the pasta cooks, make the sauce. In a large saucepan, melt the butter over medium heat. Add the minced garlic and cook for one minute until fragrant.\n4. Pour in the heavy cream and bring to a simmer. Let it cook for 2-3 minutes, stirring occasionally, until it starts to thicken slightly.\n5. Reduce the heat to low and stir in the grated parmesan cheese until it melts and the sauce is smooth. Season with salt and pepper.\n6. Drain the cooked fettuccine and add it directly to the sauce pan. Toss to coat the pasta evenly.\n7. Add the sliced chicken and toss again. Serve immediately, garnished with fresh parsley if desired.`
+            },
+            // Mexican
+            { 
+                id: 6, 
+                name: "Chicken Tacos", 
+                cuisine: "Mexican", 
+                difficulty: "Easy", 
+                time: 25, 
+                servings: 4, 
+                ingredients: [
+                    {name:"chicken breast", amount:2, unit:""}, 
+                    {name:"tortillas", amount:8, unit:""}, 
+                    {name:"salsa", amount:1, unit:"jar"}, 
+                    {name:"lettuce", amount:0.5, unit:"head"}, 
+                    {name:"cheese", amount:100, unit:"g"}, 
+                    {name:"sour cream", amount:100, unit:"ml"}
+                ], 
+                nutrition: { calories: 400, protein: 25 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/85C1E9/000000?text=Chicken+Tacos",
+                instructions: `1. Season chicken breasts with taco seasoning, salt, and pepper.\n2. Cook chicken in a skillet over medium-high heat until cooked through. Shred the chicken using two forks.\n3. Warm the tortillas in a dry skillet or in the microwave.\n4. Assemble the tacos: Fill each tortilla with shredded chicken, lettuce, salsa, shredded cheese, and a dollop of sour cream.\n5. Serve immediately with your favorite sides like rice or beans.`
+            },
+            { 
+                id: 7, 
+                name: "Guacamole", 
+                cuisine: "Mexican", 
+                difficulty: "Easy", 
+                time: 10, 
+                servings: 4, 
+                ingredients: [
+                    {name:"avocado", amount:3, unit:""}, 
+                    {name:"onion", amount:0.5, unit:""}, 
+                    {name:"lime", amount:1, unit:""}, 
+                    {name:"cilantro", amount:1, unit:"bunch"}, 
+                    {name:"jalapeno", amount:1, unit:""}
+                ], 
+                nutrition: { calories: 150, protein: 2 }, 
+                diet: ["vegetarian", "gluten-free", "dairy-free"], 
+                image: "https://placehold.co/600x400/7DCEA0/000000?text=Guacamole",
+                instructions: `1. Halve the avocados, remove the pits, and scoop the flesh into a medium bowl.\n2. Mash the avocado with a fork to your desired consistency (chunky or smooth).\n3. Finely chop the onion, cilantro, and jalapeno (remove seeds for less heat). Add them to the bowl.\n4. Squeeze the juice of one lime over the mixture. This adds flavor and prevents the avocado from browning.\n5. Season with salt to taste and stir everything together until well combined.\n6. Serve immediately with tortilla chips.`
+            },
+            { 
+                id: 8, 
+                name: "Beef Enchiladas", 
+                cuisine: "Mexican", 
+                difficulty: "Medium", 
+                time: 50, 
+                servings: 4, 
+                ingredients: [
+                    {name:"ground beef", amount:500, unit:"g"}, 
+                    {name:"tortillas", amount:8, unit:""}, 
+                    {name:"enchilada sauce", amount:400, unit:"g"}, 
+                    {name:"cheese", amount:150, unit:"g"}, 
+                    {name:"onion", amount:1, unit:""}
+                ], 
+                nutrition: { calories: 550, protein: 30 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/F1948A/000000?text=Beef+Enchiladas",
+                instructions: `1. Preheat oven to 190°C (375°F).\n2. In a skillet, cook the ground beef and chopped onion until the beef is browned. Drain off any excess fat.\n3. Spread a thin layer of enchilada sauce in the bottom of a baking dish.\n4. Warm the tortillas slightly to make them pliable. Spoon a portion of the beef mixture into each tortilla, sprinkle with some cheese, and roll it up.\n5. Place the rolled tortillas seam-side down in the baking dish.\n6. Pour the remaining enchilada sauce over the tortillas and top with the rest of the cheese.\n7. Bake for 20-25 minutes, or until the sauce is bubbly and the cheese is melted and golden.\n8. Let it cool for a few minutes before serving.`
+            },
+            { 
+                id: 9, 
+                name: "Vegetable Fajitas", 
+                cuisine: "Mexican", 
+                difficulty: "Easy", 
+                time: 30, 
+                servings: 2, 
+                ingredients: [
+                    {name:"bell peppers", amount:2, unit:""}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"zucchini", amount:1, unit:""}, 
+                    {name:"tortillas", amount:4, unit:""}, 
+                    {name:"fajita seasoning", amount:1, unit:"packet"}
+                ], 
+                nutrition: { calories: 300, protein: 8 }, 
+                diet: ["vegetarian", "dairy-free"], 
+                image: "https://placehold.co/600x400/FAD7A0/000000?text=Veggie+Fajitas",
+                instructions: `1. Slice the bell peppers, onion, and zucchini into long, thin strips.\n2. Heat a tablespoon of oil in a large skillet or cast-iron pan over medium-high heat.\n3. Add the vegetables to the hot pan and cook, stirring occasionally, until they are tender-crisp and slightly charred (about 10-12 minutes).\n4. Sprinkle the fajita seasoning over the vegetables and stir to coat everything well. Cook for another minute.\n5. Warm the tortillas while the vegetables are cooking.\n6. Serve the sizzling vegetables immediately with the warm tortillas and your favorite toppings like salsa, guacamole, or sour cream.`
+            },
+            { 
+                id: 10, 
+                name: "Quesadillas", 
+                cuisine: "Mexican", 
+                difficulty: "Easy", 
+                time: 15, 
+                servings: 2, 
+                ingredients: [
+                    {name:"tortillas", amount:4, unit:""}, 
+                    {name:"cheese", amount:100, unit:"g"}, 
+                    {name:"chicken", amount:100, unit:"g cooked"}, 
+                    {name:"bell peppers", amount:0.5, unit:""}, 
+                    {name:"onion", amount:0.25, unit:""}
+                ], 
+                nutrition: { calories: 350, protein: 20 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/EDBB99/000000?text=Quesadillas",
+                instructions: `1. Heat a large, dry skillet over medium heat.\n2. Place one tortilla in the pan. Sprinkle half of the tortilla with cheese, cooked chicken, and finely chopped bell peppers and onion.\n3. Fold the other half of the tortilla over the filling.\n4. Cook for 2-3 minutes per side, until the tortilla is golden brown and crispy, and the cheese is fully melted.\n5. Remove from the skillet and cut into wedges.\n6. Repeat with the remaining tortillas and filling. Serve hot with salsa or sour cream.`
+            },
+            // Indian
+            { 
+                id: 11, 
+                name: "Chicken Tikka Masala", 
+                cuisine: "Indian", 
+                difficulty: "Medium", 
+                time: 60, 
+                servings: 4, 
+                ingredients: [
+                    {name:"chicken breast", amount:500, unit:"g"}, 
+                    {name:"yogurt", amount:150, unit:"g"}, 
+                    {name:"tomato sauce", amount:400, unit:"g"}, 
+                    {name:"cream", amount:100, unit:"ml"}, 
+                    {name:"ginger", amount:1, unit:"tbsp"}, 
+                    {name:"garlic", amount:1, unit:"tbsp"}, 
+                    {name:"spices", amount:2, unit:"tbsp"}
+                ], 
+                nutrition: { calories: 450, protein: 35 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/E59866/000000?text=Chicken+Tikka",
+                instructions: `1. Cut chicken into bite-sized pieces. In a bowl, mix yogurt, minced ginger, minced garlic, and tikka masala spices. Add the chicken and let it marinate for at least 30 minutes.\n2. Heat oil in a large pan. Cook the chicken until golden brown on all sides. Remove from pan.\n3. In the same pan, add tomato sauce and bring to a simmer.\n4. Stir in the cream and let the sauce thicken.\n5. Return the chicken to the pan and simmer for 10-15 minutes until the chicken is cooked through.\n6. Serve hot with rice or naan bread.`
+            },
+            { 
+                id: 12, 
+                name: "Palak Paneer", 
+                cuisine: "Indian", 
+                difficulty: "Medium", 
+                time: 40, 
+                servings: 2, 
+                ingredients: [
+                    {name:"paneer", amount:200, unit:"g"}, 
+                    {name:"spinach", amount:200, unit:"g"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"tomatoes", amount:2, unit:""}, 
+                    {name:"cream", amount:50, unit:"ml"}, 
+                    {name:"spices", amount:1, unit:"tbsp"}
+                ], 
+                nutrition: { calories: 350, protein: 20 }, 
+                diet: ["vegetarian", "gluten-free"], 
+                image: "https://placehold.co/600x400/A9DFBF/000000?text=Palak+Paneer",
+                instructions: `1. Blanch the spinach in hot water for 2 minutes, then plunge into ice water. Drain and blend to a smooth purée.\n2. Cut the paneer into cubes and lightly pan-fry until golden. Set aside.\n3. Heat oil in a pan. Sauté the chopped onion until soft. Add ginger-garlic paste and cook for a minute.\n4. Add the chopped tomatoes and cook until soft. Add turmeric, coriander, and cumin powder.\n5. Stir in the spinach purée and cook for 5 minutes.\n6. Add the fried paneer cubes and cream. Simmer for another 2 minutes.\n7. Garnish with a swirl of cream and serve hot.`
+            },
+            { 
+                id: 13, 
+                name: "Chole (Chickpea Curry)", 
+                cuisine: "Indian", 
+                difficulty: "Easy", 
+                time: 45, 
+                servings: 4, 
+                ingredients: [
+                    {name:"chickpeas", amount:400, unit:"g can"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"tomatoes", amount:400, unit:"g can"}, 
+                    {name:"ginger", amount:1, unit:"tsp"}, 
+                    {name:"garlic", amount:1, unit:"tsp"}, 
+                    {name:"spices", amount:2, unit:"tsp"}
+                ], 
+                nutrition: { calories: 300, protein: 15 }, 
+                diet: ["vegetarian", "gluten-free", "dairy-free"], 
+                image: "https://placehold.co/600x400/F9E79F/000000?text=Chole",
+                instructions: `1. Heat oil in a pot. Add chopped onions and sauté until golden brown.\n2. Add minced ginger and garlic and cook for a minute.\n3. Add the canned tomatoes (or puréed fresh tomatoes) and cook until the oil starts to separate from the masala.\n4. Add chole masala powder, turmeric, and chili powder. Stir well.\n5. Add the canned chickpeas along with their water. Add salt and mix.\n6. Cover and simmer for 15-20 minutes, mashing a few chickpeas to thicken the gravy.\n7. Garnish with fresh cilantro and serve with rice or bhature.`
+            },
+            { 
+                id: 14, 
+                name: "Butter Chicken", 
+                cuisine: "Indian", 
+                difficulty: "Medium", 
+                time: 55, 
+                servings: 4, 
+                ingredients: [
+                    {name:"chicken", amount:500, unit:"g"}, 
+                    {name:"butter", amount:50, unit:"g"}, 
+                    {name:"tomatoes", amount:400, unit:"g can"}, 
+                    {name:"cream", amount:100, unit:"ml"}, 
+                    {name:"cashews", amount:50, unit:"g"}, 
+                    {name:"spices", amount:2, unit:"tbsp"}
+                ], 
+                nutrition: { calories: 500, protein: 40 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/DC7633/000000?text=Butter+Chicken",
+                instructions: `1. Marinate chicken pieces in yogurt, ginger-garlic paste, and spices for at least 30 minutes.\n2. Cook the chicken in a pan or grill until cooked through. Set aside.\n3. For the sauce, blend tomatoes and soaked cashews into a smooth paste.\n4. Heat butter in a pan, add the tomato-cashew paste and cook for 10 minutes.\n5. Add garam masala, chili powder, and salt. Stir well.\n6. Add the cooked chicken and simmer for 5 minutes.\n7. Stir in the cream and cook for another 2 minutes. Do not boil.\n8. Garnish with cilantro and serve hot.`
+            },
+            { 
+                id: 15, 
+                name: "Aloo Gobi", 
+                cuisine: "Indian", 
+                difficulty: "Easy", 
+                time: 35, 
+                servings: 2, 
+                ingredients: [
+                    {name:"potatoes", amount:2, unit:"medium"}, 
+                    {name:"cauliflower", amount:0.5, unit:"head"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"tomatoes", amount:1, unit:""}, 
+                    {name:"spices", amount:2, unit:"tsp"}
+                ], 
+                nutrition: { calories: 250, protein: 7 }, 
+                diet: ["vegetarian", "gluten-free", "dairy-free"], 
+                image: "https://placehold.co/600x400/F8C471/000000?text=Aloo+Gobi",
+                instructions: `1. Peel and cube the potatoes. Cut the cauliflower into florets.\n2. Heat oil in a pan. Add cumin seeds and let them splutter.\n3. Add chopped onions and sauté until translucent.\n4. Add chopped tomatoes, turmeric powder, coriander powder, and salt. Cook until tomatoes are mushy.\n5. Add the potatoes and cauliflower. Mix well to coat with the spices.\n6. Cover and cook on low heat for 15-20 minutes, stirring occasionally, until the vegetables are tender.\n7. Garnish with fresh cilantro and serve with roti or rice.`
+            },
+            // American
+            { 
+                id: 24, 
+                name: "Classic Cheeseburger", 
+                cuisine: "American", 
+                difficulty: "Easy", 
+                time: 25, 
+                servings: 1, 
+                ingredients: [
+                    {name:"ground beef", amount:150, unit:"g"}, 
+                    {name:"bun", amount:1, unit:""}, 
+                    {name:"cheese", amount:1, unit:"slice"}, 
+                    {name:"lettuce", amount:1, unit:"leaf"}, 
+                    {name:"tomato", amount:1, unit:"slice"}, 
+                    {name:"onion", amount:1, unit:"slice"}, 
+                    {name:"pickles", amount:2, unit:"slices"}
+                ], 
+                nutrition: { calories: 600, protein: 35 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/FAD7A0/000000?text=Cheeseburger",
+                instructions: `1. Gently form the ground beef into a patty, about 1-inch thick. Season both sides with salt and pepper.\n2. Heat a skillet or grill to medium-high heat. Cook the patty for 3-4 minutes on each side for medium-rare.\n3. During the last minute of cooking, place a slice of cheese on top of the patty to melt.\n4. Lightly toast the burger buns.\n5. Assemble the burger: Place the patty on the bottom bun, then layer with lettuce, tomato, onion, and pickles.\n6. Add your favorite condiments like ketchup or mustard. Place the top bun on and serve immediately.`
+            },
+            { 
+                id: 25, 
+                name: "Mac and Cheese", 
+                cuisine: "American", 
+                difficulty: "Easy", 
+                time: 30, 
+                servings: 4, 
+                ingredients: [
+                    {name:"macaroni", amount:200, unit:"g"}, 
+                    {name:"cheddar cheese", amount:200, unit:"g"}, 
+                    {name:"milk", amount:300, unit:"ml"}, 
+                    {name:"butter", amount:50, unit:"g"}, 
+                    {name:"flour", amount:25, unit:"g"}
+                ], 
+                nutrition: { calories: 500, protein: 20 }, 
+                diet: ["vegetarian"], 
+                image: "https://placehold.co/600x400/F9E79F/000000?text=Mac+and+Cheese",
+                instructions: `1. Cook the macaroni according to package directions. Drain and set aside.\n2. In a saucepan, melt the butter over medium heat. Whisk in the flour and cook for one minute to form a roux.\n3. Gradually whisk in the milk until the mixture is smooth. Bring to a simmer and cook for 2-3 minutes until the sauce thickens.\n4. Reduce the heat to low and stir in the shredded cheddar cheese until completely melted and smooth. Season with salt and pepper.\n5. Add the cooked macaroni to the cheese sauce and stir until well combined.\n6. Serve immediately, or transfer to a baking dish, top with breadcrumbs, and bake for a crispy top.`
+            },
+            { 
+                id: 33, 
+                name: "Shepherd's Pie", 
+                cuisine: "American", 
+                difficulty: "Medium", 
+                time: 75, 
+                servings: 4, 
+                ingredients: [
+                    {name:"ground lamb", amount:500, unit:"g"}, 
+                    {name:"potatoes", amount:1, unit:"kg"}, 
+                    {name:"carrots", amount:2, unit:""}, 
+                    {name:"peas", amount:100, unit:"g"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"beef broth", amount:200, unit:"ml"}
+                ], 
+                nutrition: { calories: 550, protein: 30 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/D5DBDB/000000?text=Shepherd's+Pie",
+                instructions: `1. Peel and boil the potatoes until tender. Drain, then mash with butter and milk until creamy. Season with salt and pepper.\n2. Preheat oven to 200°C (400°F).\n3. In a large skillet, cook the ground lamb and chopped onion until browned. Drain fat.\n4. Stir in diced carrots and cook for 5 minutes. Add flour and stir, then gradually add the beef broth.\n5. Bring to a simmer, then add the peas. Season the meat filling with salt, pepper, and herbs like rosemary or thyme.\n6. Spoon the meat mixture into a baking dish.\n7. Top with the mashed potatoes, spreading it evenly and creating a textured surface with a fork.\n8. Bake for 25-30 minutes, or until the potato topping is golden brown and the filling is bubbly.`
+            },
+            { 
+                id: 35, 
+                name: "Caesar Salad", 
+                cuisine: "American", 
+                difficulty: "Easy", 
+                time: 20, 
+                servings: 2, 
+                ingredients: [
+                    {name:"romaine lettuce", amount:1, unit:"head"}, 
+                    {name:"croutons", amount:1, unit:"cup"}, 
+                    {name:"parmesan cheese", amount:50, unit:"g"}, 
+                    {name:"lemon juice", amount:1, unit:"tbsp"}, 
+                    {name:"egg yolk", amount:1, unit:""}, 
+                    {name:"garlic", amount:1, unit:"clove"}, 
+                    {name:"olive oil", amount:50, unit:"ml"}
+                ], 
+                nutrition: { calories: 300, protein: 10 }, 
+                diet: ["vegetarian"], 
+                image: "https://placehold.co/600x400/A2D9CE/000000?text=Caesar+Salad",
+                instructions: `1. For the dressing, whisk together the egg yolk, minced garlic, and lemon juice in a small bowl.\n2. Slowly drizzle in the olive oil while whisking continuously to emulsify and create a creamy dressing.\n3. Whisk in half of the grated parmesan cheese. Season with salt and pepper.\n4. Wash and chop the romaine lettuce into bite-sized pieces.\n5. In a large bowl, toss the lettuce with the Caesar dressing until well coated.\n6. Add the croutons and the remaining parmesan cheese, and toss again gently.\n7. Serve immediately.`
+            },
+            { 
+                id: 36, 
+                name: "Beef Stew", 
+                cuisine: "American", 
+                difficulty: "Medium", 
+                time: 180, 
+                servings: 4, 
+                ingredients: [
+                    {name:"beef", amount:500, unit:"g"}, 
+                    {name:"potatoes", amount:4, unit:""}, 
+                    {name:"carrots", amount:3, unit:""}, 
+                    {name:"celery", amount:2, unit:"stalks"}, 
+                    {name:"onion", amount:1, unit:""}, 
+                    {name:"beef broth", amount:500, unit:"ml"}, 
+                    {name:"red wine", amount:100, unit:"ml"}
+                ], 
+                nutrition: { calories: 450, protein: 40 }, 
+                diet: [], 
+                image: "https://placehold.co/600x400/F5B7B1/000000?text=Beef+Stew",
+                instructions: `1. Pat the beef cubes dry and season with salt and pepper. In a large pot or Dutch oven, brown the beef in oil over medium-high heat. Work in batches if necessary. Remove beef and set aside.\n2. Add the chopped onion, carrots, and celery to the pot and cook until softened.\n3. Pour in the red wine to deglaze the pot, scraping up any browned bits from the bottom.\n4. Return the beef to the pot. Add the beef broth and any desired herbs (like thyme or a bay leaf).\n5. Bring to a simmer, then reduce the heat to low, cover, and cook for at least 2 hours, or until the beef is tender.\n6. Add the cubed potatoes and continue to cook for another 45-60 minutes, or until the potatoes are cooked through and the stew has thickened.\n7. Season to taste and serve hot.`
+            }
+        ];
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- FIREBASE SETUP ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoAm0XdUcPz8EiJ8m1q5i8l6OwtxP1RpY",
+            authDomain: "smart-recipe-generator-d7325.firebaseapp.com",
+            projectId: "smart-recipe-generator-d7325",
+            storageBucket: "smart-recipe-generator-d7325.firebasestorage.app",
+            messagingSenderId: "179371083383",
+            appId: "1:179371083383:web:c00ac468dd13f97a902872"
+        };
+        
+        let app, db, auth, userId;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        try {
+            const firebaseConfigStr = typeof __firebase_config !== 'undefined' ? __firebase_config : JSON.stringify(firebaseConfig);
+            app = initializeApp(JSON.parse(firebaseConfigStr));
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    userId = user.uid;
+                    loadUserData();
+                } else {
+                    signInAnonymously(auth).catch(error => {
+                        console.error("Anonymous sign-in failed:", error);
+                        showMessage("Could not connect to user services.");
+                    });
+                }
+            });
+        } catch(e) {
+            console.error("Firebase initialization failed:", e);
+            showMessage("Application could not be initialized. Please try again later.");
+        }
+
+
+        // --- DOM ELEMENTS ---
+        const findRecipesBtn = document.getElementById('find-recipes-btn');
+        const ingredientTextInput = document.getElementById('ingredient-text-input');
+        const ingredientImageInput = document.getElementById('ingredient-image-input');
+        const recipeResults = document.getElementById('recipe-results');
+        const modal = document.getElementById('recipe-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const loader = document.getElementById('loader');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const filterSection = document.getElementById('filter-section');
+        const cuisineFilter = document.getElementById('cuisine-filter');
+        const difficultyFilter = document.getElementById('difficulty-filter');
+        const timeFilter = document.getElementById('time-filter');
+        const sortBy = document.getElementById('sort-by');
+        const suggestedRecipesSection = document.getElementById('suggested-recipes-section');
+        const suggestedRecipesGrid = document.getElementById('suggested-recipes-grid');
+
+        // --- STATE ---
+        let userIngredients = [];
+        let userFavorites = [];
+        let userRatings = {};
+        let currentRecipes = [];
+        
+        // --- GEMINI API SETUP ---
+        const API_KEY = "AIzaSyBgTSed9_YAuo6pwE_0AJNRJ-4HYooLZ34"; // Use empty string for automatic key injection
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+        
+        // --- EVENT LISTENERS ---
+        findRecipesBtn.addEventListener('click', handleRecipeSearch);
+        ingredientImageInput.addEventListener('change', handleImageUpload);
+        closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+        [cuisineFilter, difficultyFilter, timeFilter, sortBy].forEach(el => el.addEventListener('change', applyFiltersAndSort));
+
+        // --- FUNCTIONS ---
+
+        function getUserDocRef() {
+            if (!userId) return null;
+            return doc(db, `artifacts/${appId}/users/${userId}/userProfile`, "data");
+        }
+
+        function showMessage(message, isError = true) {
+            messageText.textContent = message;
+            messageBox.className = `fixed bottom-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            messageBox.classList.remove('hidden');
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000);
+        }
+
+        async function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            loader.classList.remove('hidden');
+
+            try {
+                const base64Image = await toBase64(file);
+                const detectedIngredients = await analyzeImage(base64Image);
+                const currentText = ingredientTextInput.value.trim();
+                ingredientTextInput.value = currentText ? `${currentText}, ${detectedIngredients}` : detectedIngredients;
+            } catch (error) {
+                console.error("Image analysis failed:", error);
+                showMessage("Could not analyze the image. Please try again.");
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        async function analyzeImage(base64ImageData) {
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: "Identify the food ingredients in this image. List them as comma-separated values. If there are non-food items, ignore them." },
+                        { inlineData: { mimeType: "image/jpeg", data: base64ImageData } }
+                    ]
+                }],
+            };
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result.candidates[0].content.parts[0].text.trim();
+        }
+
+        function handleRecipeSearch() {
+            const textIngredients = ingredientTextInput.value.toLowerCase().split(',').map(i => i.trim()).filter(Boolean);
+            const dietPrefs = Array.from(document.querySelectorAll('.diet-pref:checked')).map(cb => cb.value);
+
+            userIngredients = [...new Set(textIngredients)];
+
+            if (userIngredients.length === 0) {
+                showMessage("Please enter at least one ingredient.");
+                return;
+            }
+
+            currentRecipes = findMatchingRecipes(userIngredients, dietPrefs);
+            applyFiltersAndSort();
+            
+            if(currentRecipes.length > 0) {
+                filterSection.classList.remove('hidden');
+            } else {
+                filterSection.classList.add('hidden');
+            }
+        }
+
+        function findMatchingRecipes(ingredients, diets) {
+            const isHealthy = diets.includes('healthy');
+            const standardDiets = diets.filter(d => d !== 'healthy');
+            
+            let matchedRecipes = window.recipeDatabase
+                .map(recipe => {
+                    const matchedIngredientObjects = [];
+                    recipe.ingredients.forEach(ingObj => {
+                        if (ingredients.some(userIng => ingObj.name.toLowerCase().includes(userIng))) {
+                            matchedIngredientObjects.push(ingObj);
+                        }
+                    });
+
+                    const matchScore = matchedIngredientObjects.length / recipe.ingredients.length;
+                    
+                    const missingIngredientObjects = recipe.ingredients.filter(ingObj => !matchedIngredientObjects.some(m => m.name === ingObj.name));
+                    const missingIngredientNames = missingIngredientObjects.map(ingObj => ingObj.name);
+
+                    return { ...recipe, matchScore, matchedCount: matchedIngredientObjects.length, missingCount: missingIngredientObjects.length, missing: missingIngredientNames };
+                })
+                .filter(recipe => recipe.matchedCount > 0);
+
+            if (isHealthy) {
+                matchedRecipes = matchedRecipes.filter(recipe => recipe.nutrition.calories < 600 && recipe.nutrition.protein >= 20);
+            }
+
+            if (standardDiets.length > 0) {
+                 matchedRecipes = matchedRecipes.filter(recipe => standardDiets.every(diet => recipe.diet.includes(diet)));
+            }
+
+            return matchedRecipes.sort((a, b) => b.matchScore - a.matchScore || a.missingCount - b.missingCount);
+        }
+        
+        function applyFiltersAndSort() {
+            let recipesToDisplay = [...currentRecipes];
+            const cuisine = cuisineFilter.value;
+            const difficulty = difficultyFilter.value;
+            const time = parseInt(timeFilter.value, 10);
+            const sortValue = sortBy.value;
+
+            // Filter
+            if (cuisine !== 'all') {
+                recipesToDisplay = recipesToDisplay.filter(r => r.cuisine === cuisine);
+            }
+            if (difficulty !== 'all') {
+                recipesToDisplay = recipesToDisplay.filter(r => r.difficulty === difficulty);
+            }
+            if (!isNaN(time)) {
+                recipesToDisplay = recipesToDisplay.filter(r => r.time <= time);
+            }
+
+            // Sort
+            switch (sortValue) {
+                case 'match':
+                    recipesToDisplay.sort((a, b) => b.matchScore - a.matchScore || a.missingCount - b.missingCount);
+                    break;
+                case 'time-asc':
+                    recipesToDisplay.sort((a, b) => a.time - b.time);
+                    break;
+                case 'time-desc':
+                    recipesToDisplay.sort((a, b) => b.time - a.time);
+                    break;
+            }
+
+            displayRecipes(recipesToDisplay);
+        }
+
+        function displayRecipes(recipes) {
+            recipeResults.innerHTML = '';
+            if (recipes.length === 0) {
+                recipeResults.innerHTML = `<p class="text-center text-gray-400 col-span-full">No recipes found. Try adding more ingredients or changing your filters.</p>`;
+                return;
+            }
+            recipes.forEach(recipe => {
+                const isFavorite = userFavorites.includes(recipe.id);
+                const userRating = userRatings[recipe.id];
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 border border-gray-700 hover:shadow-purple-500/20 hover:border-purple-500';
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${recipe.image}" alt="${recipe.name}" class="w-full h-48 object-cover">
+                        ${userRating ? `<span class="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                            <svg class="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            Rated
+                        </span>` : ''}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 text-white">${recipe.name}</h3>
+                        <div class="flex items-center justify-between text-sm text-gray-400 mb-2">
+                            <span>${recipe.difficulty}</span>
+                            <span>${recipe.time} min</span>
+                            <span>${recipe.cuisine}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
+                            <span>🔥 ${recipe.nutrition.calories} kcal</span>
+                            <span>💪 ${recipe.nutrition.protein}g protein</span>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-2"><strong>You have:</strong> ${recipe.matchedCount} / ${recipe.ingredients.length} ingredients</p>
+                        ${recipe.missingCount > 0 ? `<p class="text-sm text-red-400"><strong>Missing:</strong> ${recipe.missing.slice(0, 3).join(', ')}${recipe.missingCount > 3 ? '...' : ''}</p>` : '<p class="text-sm text-green-400"><strong>You have all ingredients!</strong></p>'}
+                        <div class="mt-4 flex justify-between items-center">
+                            <button class="view-recipe-btn bg-purple-500/20 text-purple-300 px-4 py-2 rounded-lg hover:bg-purple-500/30 transition" data-id="${recipe.id}">View Recipe</button>
+                            <button class="favorite-btn" data-id="${recipe.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-500'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                recipeResults.appendChild(card);
+            });
+             // Add event listeners for new buttons
+            document.querySelectorAll('.view-recipe-btn').forEach(btn => btn.addEventListener('click', (e) => showRecipeDetails(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.favorite-btn').forEach(btn => btn.addEventListener('click', (e) => toggleFavorite(e.currentTarget.dataset.id, e.currentTarget)));
+        }
+        
+        function showRecipeDetails(recipeId) {
+            const recipe = window.recipeDatabase.find(r => r.id == recipeId);
+            if (!recipe) return;
+
+            const generateIngredientHTML = (servings) => {
+                if (!servings || servings < 1) servings = recipe.servings;
+                const multiplier = servings / recipe.servings;
+                return recipe.ingredients.map(ing => {
+                    if (ing.amount === null || ing.amount === undefined) {
+                        return `<li>${ing.name}</li>`;
+                    }
+                    const newAmount = ing.amount * multiplier;
+                    const displayAmount = Number.isInteger(newAmount) ? newAmount : newAmount.toFixed(1).replace('.0', '');
+                    return `<li><span class="font-semibold text-purple-300">${displayAmount} ${ing.unit || ''}</span> ${ing.name}</li>`;
+                }).join('');
+            };
+
+            const servingsOptionsSet = new Set([1, 2, 3, 4, 5, 6, 7, 8]);
+            servingsOptionsSet.add(recipe.servings);
+            const sortedOptions = Array.from(servingsOptionsSet).sort((a, b) => a - b);
+            const servingsOptionsHTML = sortedOptions.map(num => 
+                `<option value="${num}" ${num === recipe.servings ? 'selected' : ''}>${num}</option>`
+            ).join('');
+
+            modalContent.innerHTML = `
+                <h2 class="text-3xl font-bold mb-4 text-white">${recipe.name}</h2>
+                <img src="${recipe.image}" alt="${recipe.name}" class="w-full h-64 object-cover rounded-lg mb-4">
+                <div class="text-left grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 border-b border-gray-600 pb-2 text-white">Ingredients</h3>
+                        <div class="my-3 flex items-center gap-2">
+                            <label for="servings-input" class="text-sm font-medium text-gray-300">Servings:</label>
+                            <select id="servings-input" class="w-20 p-2 border border-gray-600 rounded-lg bg-gray-700 text-gray-200">
+                                ${servingsOptionsHTML}
+                            </select>
+                        </div>
+                        <ul id="ingredient-list" class="list-disc list-inside space-y-2 text-gray-300">
+                            ${generateIngredientHTML(recipe.servings)}
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 border-b border-gray-600 pb-2 text-white">Instructions</h3>
+                        <p class="text-gray-300 whitespace-pre-line">${recipe.instructions}</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <h3 class="text-xl font-semibold mb-2 border-b border-gray-600 pb-2 text-white">Nutritional Info (per serving)</h3>
+                        <p class="text-gray-300">Calories: ${recipe.nutrition.calories} | Protein: ${recipe.nutrition.protein}g</p>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <label for="rating" class="text-gray-300">Rate this recipe:</label>
+                    <div id="rating-stars" class="flex justify-center mt-2">
+                        ${[1,2,3,4,5].map(i => `<svg class="star h-8 w-8 text-gray-500 cursor-pointer" data-value="${i}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>`).join('')}
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+            
+            const servingsInput = document.getElementById('servings-input');
+            const ingredientList = document.getElementById('ingredient-list');
+            servingsInput.addEventListener('change', () => {
+                ingredientList.innerHTML = generateIngredientHTML(parseInt(servingsInput.value, 10));
+            });
+
+            const savedRating = userRatings[recipeId];
+            if (savedRating) {
+                document.querySelectorAll('.star').forEach(s => {
+                    s.classList.toggle('text-yellow-400', s.dataset.value <= savedRating);
+                    s.classList.toggle('text-gray-500', s.dataset.value > savedRating);
+                });
+            }
+
+            document.getElementById('rating-stars').addEventListener('click', (e) => {
+                const star = e.target.closest('.star');
+                if (star) {
+                    const rating = star.dataset.value;
+                    handleRating(recipe.id, rating);
+                    document.querySelectorAll('.star').forEach(s => {
+                        s.classList.toggle('text-yellow-400', s.dataset.value <= rating);
+                        s.classList.toggle('text-gray-500', s.dataset.value > rating);
+                    });
+                }
+            });
+        }
+
+        async function toggleFavorite(recipeId, btnElement) {
+            if (!userId) {
+                showMessage("You need to be signed in to save favorites.");
+                return;
+            }
+            recipeId = parseInt(recipeId, 10);
+            const svg = btnElement.querySelector('svg');
+            
+            if (userFavorites.includes(recipeId)) {
+                userFavorites = userFavorites.filter(id => id !== recipeId);
+                svg.classList.remove('text-red-500', 'fill-current');
+                svg.classList.add('text-gray-500');
+            } else {
+                userFavorites.push(recipeId);
+                svg.classList.add('text-red-500', 'fill-current');
+                svg.classList.remove('text-gray-500');
+            }
+            await saveUserData();
+        }
+        
+        async function handleRating(recipeId, rating) {
+            if (!userId) {
+                 showMessage("You need to be signed in to rate recipes.");
+                return;
+            }
+            userRatings[recipeId] = parseInt(rating, 10);
+            await saveUserData();
+            showMessage("Rating saved!", false);
+        }
+
+
+        async function saveUserData() {
+            if (!userId) return;
+            const userDocRef = getUserDocRef();
+            if (!userDocRef) return;
+            
+            const userData = {
+                favorites: userFavorites,
+                ratings: userRatings
+            };
+            await setDoc(userDocRef, userData);
+            generateSuggestions();
+        }
+
+        async function loadUserData() {
+            if (!userId) return;
+            const userDocRef = getUserDocRef();
+            if (!userDocRef) return;
+
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                userFavorites = data.favorites || [];
+                userRatings = data.ratings || {};
+                if (currentRecipes.length > 0) {
+                    applyFiltersAndSort();
+                }
+            }
+            generateSuggestions();
+        }
+
+        async function generateSuggestions() {
+            if (!userId) return;
+            const userDocRef = getUserDocRef();
+            if (!userDocRef) return;
+
+            const docSnap = await getDoc(userDocRef);
+
+            if (!docSnap.exists()) {
+                suggestedRecipesSection.classList.add('hidden');
+                return;
+            }
+            
+            const userData = docSnap.data();
+            const favorites = userData.favorites || [];
+            const ratings = userData.ratings || {};
+            
+            if (favorites.length === 0 && Object.keys(ratings).length === 0) {
+                suggestedRecipesSection.classList.add('hidden');
+                return;
+            }
+
+            let suggestions = new Set();
+            let favoriteCuisines = {};
+
+            favorites.forEach(favId => {
+                const recipe = window.recipeDatabase.find(r => r.id === favId);
+                if(recipe) {
+                    favoriteCuisines[recipe.cuisine] = (favoriteCuisines[recipe.cuisine] || 0) + 1;
+                }
+            });
+
+            Object.entries(ratings).forEach(([recipeId, rating]) => {
+                if (rating >= 4) {
+                    const recipe = window.recipeDatabase.find(r => r.id == recipeId);
+                    if(recipe) {
+                         favoriteCuisines[recipe.cuisine] = (favoriteCuisines[recipe.cuisine] || 0) + 2;
+                    }
+                }
+            });
+
+            const topCuisine = Object.keys(favoriteCuisines).sort((a,b) => favoriteCuisines[b] - favoriteCuisines[a])[0];
+
+            if (topCuisine) {
+                window.recipeDatabase.forEach(recipe => {
+                    if (recipe.cuisine === topCuisine && !favorites.includes(recipe.id)) {
+                        suggestions.add(recipe);
+                    }
+                });
+            }
+
+            while(suggestions.size < 3) {
+                const randomRecipe = window.recipeDatabase[Math.floor(Math.random() * window.recipeDatabase.length)];
+                 if (!favorites.includes(randomRecipe.id)) {
+                     suggestions.add(randomRecipe);
+                 }
+            }
+            
+            displaySuggestions(Array.from(suggestions).slice(0, 3));
+        }
+
+        function displaySuggestions(recipes) {
+            if (recipes.length === 0) {
+                 suggestedRecipesSection.classList.add('hidden');
+                 return;
+            }
+            suggestedRecipesGrid.innerHTML = '';
+            recipes.forEach(recipe => {
+                const isFavorite = userFavorites.includes(recipe.id);
+                const userRating = userRatings[recipe.id];
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-2xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 border border-gray-700 hover:shadow-purple-500/20 hover:border-purple-500';
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${recipe.image}" alt="${recipe.name}" class="w-full h-48 object-cover">
+                        ${userRating ? `<span class="absolute top-2 right-2 bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                            <svg class="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            Rated
+                        </span>` : ''}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 text-white">${recipe.name}</h3>
+                        <div class="flex items-center justify-between text-sm text-gray-400 mb-2">
+                            <span>${recipe.difficulty}</span>
+                            <span>${recipe.time} min</span>
+                            <span>${recipe.cuisine}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
+                            <span>🔥 ${recipe.nutrition.calories} kcal</span>
+                            <span>💪 ${recipe.nutrition.protein}g protein</span>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center">
+                            <button class="view-recipe-btn bg-purple-500/20 text-purple-300 px-4 py-2 rounded-lg hover:bg-purple-500/30 transition" data-id="${recipe.id}">View Recipe</button>
+                            <button class="favorite-btn" data-id="${recipe.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${isFavorite ? 'text-red-500 fill-current' : 'text-gray-500'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                suggestedRecipesGrid.appendChild(card);
+            });
+            suggestedRecipesSection.classList.remove('hidden');
+            document.querySelectorAll('#suggested-recipes-grid .view-recipe-btn').forEach(btn => btn.addEventListener('click', (e) => showRecipeDetails(e.currentTarget.dataset.id)));
+            document.querySelectorAll('#suggested-recipes-grid .favorite-btn').forEach(btn => btn.addEventListener('click', (e) => toggleFavorite(e.currentTarget.dataset.id, e.currentTarget)));
+        }
+
+    </script>
+</body>
+</html>
+
